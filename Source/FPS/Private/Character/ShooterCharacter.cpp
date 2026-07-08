@@ -3,7 +3,9 @@
 
 #include "Character/ShooterCharacter.h"
 
+#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Combat/CombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -36,6 +38,9 @@ AShooterCharacter::AShooterCharacter()
 	GetMesh()->bOnlyOwnerSee = false;
 	GetMesh()->bOwnerNoSee = true;
 	GetMesh()->bReceivesDecals = false;
+	
+	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
+	Combat->SetIsReplicated(true);
 }
 
 
@@ -45,17 +50,53 @@ void AShooterCharacter::BeginPlay()
 	
 }
 
+void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	
+	UEnhancedInputComponent* ShooterInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+	
+	ShooterInputComponent->BindAction(CycleWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_CycleWeapon);
+	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_FireWeapon_Pressed);
+	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed,this, &ThisClass::Input_FireWeapon_Released);
+	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_Aim_Pressed);
+	ShooterInputComponent->BindAction(AimWeaponAction, ETriggerEvent::Completed, this, &ThisClass::Input_Aim_Released);
+	ShooterInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_ReloadWeapon);
+}
+
+void AShooterCharacter::Input_CycleWeapon()
+{
+	Combat->Initiate_CycleWeapon();
+}
+
+void AShooterCharacter::Input_ReloadWeapon()
+{
+	Combat->Initiate_ReloadWeapon();
+}
+
+void AShooterCharacter::Input_FireWeapon_Pressed()
+{
+	Combat->Initiate_FireWeapon_Pressed();
+}
+
+void AShooterCharacter::Input_FireWeapon_Released()
+{
+	Combat->Initiate_FireWeapon_Released();
+}
+
+void AShooterCharacter::Input_Aim_Pressed()
+{
+	Combat->Initiate_Aim_Pressed();
+}
+
+void AShooterCharacter::Input_Aim_Released()
+{
+	Combat->Initiate_Aim_Released();
+}
+
 
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
-
-
-void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-
