@@ -26,4 +26,10 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, Blueprintable)
 	FName GetWeaponAttachPoint(const FGameplayTag& WeaponType) const;
+	
+	UFUNCTION(BlueprintNativeEvent, Blueprintable)
+	USkeletalMeshComponent* GetMesh1P() const;
+	
+	UFUNCTION(BlueprintNativeEvent, Blueprintable)
+	USkeletalMeshComponent* GetMesh3P() const;
 };
