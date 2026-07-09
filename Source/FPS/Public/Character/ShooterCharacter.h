@@ -28,10 +28,12 @@ public:
 	virtual USkeletalMeshComponent* GetMesh1P_Implementation() const override;
 	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
 	/* End Of PlayerInterface*/
-protected:
+
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 
+protected:
+	
 private:
 	
 	void Input_CycleWeapon();
@@ -41,7 +43,7 @@ private:
 	void Input_Aim_Pressed();
 	void Input_Aim_Released();
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Combat")
 	TObjectPtr<UCombatComponent> Combat;
 	
 	// 1st person view (arms)

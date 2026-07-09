@@ -101,7 +101,7 @@ void UCombatComponent::SpawnInventory()
 	
 	if (Inventory.Num() > 0)
 	{
-		Inventory[0]->AttachToOwningPawn();
+		Equip(Inventory[0]);
 	}
 }
 
