@@ -51,6 +51,15 @@ void AShooterCharacter::BeginPlay()
 	
 }
 
+void AShooterCharacter::BeginDestroy()
+{
+	Super::BeginDestroy();
+	if (IsValid(Combat))
+	{
+		Combat->DestroyInventory();
+	}
+}
+
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);

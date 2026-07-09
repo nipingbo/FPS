@@ -30,6 +30,7 @@ public:
 	/* End Of PlayerInterface*/
 protected:
 	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
 
 private:
 	
