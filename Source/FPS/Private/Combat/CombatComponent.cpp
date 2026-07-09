@@ -5,6 +5,7 @@
 
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
+#include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 
 UCombatComponent::UCombatComponent()
@@ -15,6 +16,12 @@ UCombatComponent::UCombatComponent()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UCombatComponent, Inventory);
 }
 
 void UCombatComponent::Initiate_CycleWeapon()
@@ -79,10 +86,16 @@ void UCombatComponent::Initiate_Aim_Released()
 
 void UCombatComponent::SpawnInventory()
 {
-	AWeapon* NewWeapon = SpawnWeapon(DefaultWeaponClass);
-	if (IsValid(NewWeapon))
+	if (GetOwner()->GetLocalRole() < ROLE_Authority) return;
+	for (auto& WeaponClass : DefaultWeaponClasses)
 	{
-		NewWeapon->AttachToOwningPawn();
+		AWeapon* Weapon = SpawnWeapon(WeaponClass);
+		Inventory.AddUnique(Weapon);
+	}
+	
+	if (Inventory.Num() > 0)
+	{
+		Inventory[0]->AttachToOwningPawn();
 	}
 }
 

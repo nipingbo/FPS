@@ -18,7 +18,8 @@ class FPS_API UCombatComponent : public UActorComponent
 public:
 	UCombatComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	void Initiate_CycleWeapon();
 	void Initiate_FireWeapon_Pressed();
 	void Initiate_FireWeapon_Released();
@@ -34,8 +35,11 @@ public:
 protected:
 
 private:
+	UPROPERTY(Transient, Replicated)
+	TArray<AWeapon*> Inventory;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
-	TSubclassOf<AWeapon> DefaultWeaponClass;
+	TArray<TSubclassOf<AWeapon>> DefaultWeaponClasses;
 	
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
 };
