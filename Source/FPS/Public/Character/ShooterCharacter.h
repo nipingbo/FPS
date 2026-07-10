@@ -31,6 +31,9 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
+	
+	UFUNCTION(BlueprintCallable)
+	FRotator GetFixedAimRotation() const;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
