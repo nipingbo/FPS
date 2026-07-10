@@ -42,13 +42,15 @@ AShooterCharacter::AShooterCharacter()
 	
 	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
 	Combat->SetIsReplicated(true);
+	
+	DefaultFieldOfView = 90.f;
 }
 
 
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	FirstPersonCamera->SetFieldOfView(DefaultFieldOfView);
 }
 
 void AShooterCharacter::BeginDestroy()
@@ -122,11 +124,13 @@ void AShooterCharacter::Input_FireWeapon_Released()
 void AShooterCharacter::Input_Aim_Pressed()
 {
 	Combat->Initiate_Aim_Pressed();
+	OnAim(true);
 }
 
 void AShooterCharacter::Input_Aim_Released()
 {
 	Combat->Initiate_Aim_Released();
+	OnAim(false);
 }
 
 

@@ -33,7 +33,8 @@ public:
 	virtual void BeginDestroy() override;
 
 protected:
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnAim(bool bIsAiming);
 private:
 	
 	void Input_CycleWeapon();
@@ -53,8 +54,11 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpringArmComponent> SpringArm;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true), Category = "FPS|Camera")
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming", meta = (AllowPrivateAccess = true))
+	float DefaultFieldOfView;
 	
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> CycleWeaponAction;
