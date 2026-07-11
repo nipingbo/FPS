@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
+#include "ShooterTypes/ShooterTypes.h"
 #include "ShooterCharacter.generated.h"
 
 class UCombatComponent;
@@ -53,7 +54,20 @@ private:
 	void Input_Aim_Released();
 	
 	void CalculateFABRIKSocketTransform();
-	void CalculateTurnInPlaceParameters();
+	void CalculateTurnInPlaceParameters(float DeltaTime);
+	void TurnInPlace(float DeltaTime);
+	
+	FRotator StartingAimRotation;
+	float InterpAO_Yaw;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|TurnInPlace", meta = (AllowPrivateAccess = true))
+	float AO_Yaw;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|Strafing", meta = (AllowPrivateAccess = true))
+	float MovementOffsetYaw;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|TurnInPlace", meta = (AllowPrivateAccess = true))
+	ETurningInPlace TurningStatus;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Combat")
 	TObjectPtr<UCombatComponent> Combat;
