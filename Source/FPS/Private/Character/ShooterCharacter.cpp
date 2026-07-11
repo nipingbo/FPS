@@ -76,6 +76,11 @@ FRotator AShooterCharacter::GetFixedAimRotation() const
 	return AimRotation;
 }
 
+bool AShooterCharacter::HasCurrentWeapon() const
+{
+	return IsValid(Combat) && Combat->CurrentWeapon != nullptr;
+}
+
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -150,7 +155,13 @@ void AShooterCharacter::Input_Aim_Released()
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	CalculateTurnInPlaceParameters();
 	CalculateFABRIKSocketTransform();
+}
+
+void AShooterCharacter::CalculateTurnInPlaceParameters()
+{
+	
 }
 
 void AShooterCharacter::CalculateFABRIKSocketTransform()

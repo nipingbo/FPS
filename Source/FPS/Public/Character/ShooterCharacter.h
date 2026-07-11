@@ -38,6 +38,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "FPS|FABRIK")
 	FTransform FABRIK_SocketTransform;
 
+	UFUNCTION(BlueprintCallable)
+	bool HasCurrentWeapon() const;
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAim(bool bIsAiming);
@@ -49,6 +51,9 @@ private:
 	void Input_FireWeapon_Released();
 	void Input_Aim_Pressed();
 	void Input_Aim_Released();
+	
+	void CalculateFABRIKSocketTransform();
+	void CalculateTurnInPlaceParameters();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Combat")
 	TObjectPtr<UCombatComponent> Combat;
@@ -78,5 +83,5 @@ private:
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> AimWeaponAction;
 
-	void CalculateFABRIKSocketTransform();
+	
 };
