@@ -34,6 +34,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	FRotator GetFixedAimRotation() const;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "FPS|FABRIK")
+	FTransform FABRIK_SocketTransform;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
@@ -75,7 +78,5 @@ private:
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> AimWeaponAction;
 
-	
-	
-
+	void CalculateFABRIKSocketTransform();
 };
