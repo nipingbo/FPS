@@ -40,11 +40,11 @@ void AShooterPlayerController::SetupInputComponent()
 void AShooterPlayerController::Input_Crouch()
 {
 	if (!IsValid(GetCharacter())) return;
+	
 	if (UCharacterMovementComponent* CMC = GetCharacter()->GetCharacterMovement(); IsValid(CMC))
 	{
 		CMC->bWantsToCrouch = !CMC->bWantsToCrouch;
 	}
-	
 }
 
 void AShooterPlayerController::Input_Jump()
