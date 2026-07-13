@@ -75,14 +75,7 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float InTraceLength) const
 	FCollisionQueryParams QueryParams;
 	QueryParams.bReturnPhysicalMaterial = true;
 	QueryParams.AddIgnoredActor(GetOwner());
-	
-	FCollisionResponseParams ResponseParams;
-	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
-	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Block);
-	ResponseParams.CollisionResponse.SetResponse(ECC_WorldStatic, ECR_Block);
-	ResponseParams.CollisionResponse.SetResponse(ECC_WorldDynamic, ECR_Block);
-	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Block);
-	
+
 	ensure(GetInstigator());
 	if (APlayerController* PC = Cast<APlayerController>(GetInstigator()->GetController()); IsValid(PC))
 	{
@@ -90,10 +83,10 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float InTraceLength) const
 		FRotator EyesWorldRotation;
 		PC->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
 		const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
-		
+
 		const FVector Start = EyesWorldLocation;
 		const FVector End = Start + EyesWorldDirection * InTraceLength;
-		
+
 		const bool bHit = GetWorld()->SweepSingleByChannel(
 			OutHit,
 			Start,
@@ -101,16 +94,15 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float InTraceLength) const
 			FQuat::Identity,
 			FPSTraceChannels::ECC_Weapon,
 			FCollisionShape::MakeSphere(TraceRadius),
-			QueryParams,
-			ResponseParams
+			QueryParams
 		);
-		
+
 		if (!bHit)
 		{
 			OutHit.ImpactPoint = End;
 		}
 		
-		/*DrawDebugSphereTraceSingle(
+		DrawDebugSphereTraceSingle(
 			GetWorld(),
 			Start,
 			End,
@@ -120,7 +112,7 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float InTraceLength) const
 			OutHit,
 			FColor::Green,
 			FColor::Red,
-			5.f);*/
+			5.f);
 		
 	}
 }

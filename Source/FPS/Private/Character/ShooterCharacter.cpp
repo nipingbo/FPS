@@ -81,7 +81,7 @@ FRotator AShooterCharacter::GetFixedAimRotation() const
 
 bool AShooterCharacter::HasCurrentWeapon() const
 {
-	return IsValid(Combat) && Combat->CurrentWeapon != nullptr;
+	return IsValid(Combat) && IsValid(Combat->CurrentWeapon);
 }
 
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -16,7 +16,7 @@
 
 UCombatComponent::UCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -151,6 +151,8 @@ void UCombatComponent::Equip(AWeapon* Weapon)
 void UCombatComponent::SpawnInventory()
 {
 	if (GetOwner()->GetLocalRole() < ROLE_Authority) return;
+	// 断线重连时 PossessedBy 会再次触发，Inventory 已有内容则不重复生成。
+	if (Inventory.Num() > 0) return;
 	for (auto& WeaponClass : DefaultWeaponClasses)
 	{
 		AWeapon* Weapon = SpawnWeapon(WeaponClass);
