@@ -31,7 +31,7 @@ public:
 	/* End Of PlayerInterface*/
 
 	virtual void BeginPlay() override;
-	virtual void BeginDestroy() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	UFUNCTION(BlueprintCallable)
 	FRotator GetFixedAimRotation() const;

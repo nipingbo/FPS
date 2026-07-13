@@ -57,9 +57,9 @@ void AShooterCharacter::BeginPlay()
 	StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 }
 
-void AShooterCharacter::BeginDestroy()
+void AShooterCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::BeginDestroy();
+	Super::EndPlay(EndPlayReason);
 	if (IsValid(Combat))
 	{
 		Combat->DestroyInventory();

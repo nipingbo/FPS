@@ -58,28 +58,38 @@ void UCombatComponent::Local_FireWeapon()
 	{
 		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
 	}
+	// 本地做 Trace 只用于立即播放本地特效（枪口火焰、弹孔贴花等），
+	// 不把结果上传服务端，避免外挂伪造命中数据。
 	FHitResult Hit;
 	CurrentWeapon->WeaponTrace(Hit, CurrentWeapon->TraceLength);
 	EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false)? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
-	
-	Server_FireWeapon(Hit);
+
+	Server_FireWeapon();
 }
 
-void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& Hit)
+// 服务端不使用客户端的 Hit 数据，而是用服务端自己的视角重新做 Trace，
+// 保证命中判定在服务端权威数据上进行，客户端无法伪造结果。
+void UCombatComponent::Server_FireWeapon_Implementation()
 {
+	if (!IsValid(CurrentWeapon)) return;
+	FHitResult Hit;
+	CurrentWeapon->WeaponTrace(Hit, CurrentWeapon->TraceLength);
 	Multicast_FireWeapon(Hit);
 }
 
 void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit)
 {
-	APawn* Pawn = Cast<APawn>(GetOwner());
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	if (!IsValid(Pawn)) return;
+
 	if (Pawn->IsLocallyControlled())
 	{
 		//do locally controlled stuff
 	}
 	else
 	{
+		if (!IsValid(CurrentWeapon)) return;
 		ensure(IsValid(WeaponData));
 		
 		EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
@@ -87,8 +97,7 @@ void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit
 		
 		//play the fire weapon montage for the first person mesh
 		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
-		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner());
-		if (IsValid(Mesh3P) && IsValid(Montage3P))
+		if (const USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner()); IsValid(Mesh3P) && IsValid(Montage3P))
 		{
 			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
 		}
@@ -167,6 +176,9 @@ void UCombatComponent::DestroyInventory()
 
 void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 {
+	// Inventory 和 CurrentWeapon 都是 Replicated，但 Actor 属性和 Actor 本体的
+	// 复制顺序不保证。此处 CurrentWeapon 无效说明 Weapon Actor 本体还未到达客户端，
+	// 直接返回即可——AWeapon::OnRep_Instigator 会在 Actor 就绪后补调 AttachToOwningPawn。
 	if (!IsValid(CurrentWeapon)) return;
 	CurrentWeapon->AttachToOwningPawn();
 }

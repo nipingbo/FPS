@@ -57,8 +57,10 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_Aim(bool bPressed);
 	
+	// 不接受客户端传来的 Hit 数据，服务端收到信号后自己做 Trace，
+	// 防止客户端伪造命中位置或目标。
 	UFUNCTION(Server, Reliable)
-	void Server_FireWeapon(const FHitResult& Hit);
+	void Server_FireWeapon();
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_FireWeapon(const FHitResult& Hit);
