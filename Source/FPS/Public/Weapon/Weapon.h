@@ -43,12 +43,12 @@ protected:
 	void FireEffects(const FVector& ImpactPoint, const FVector& ImpactNormal, EPhysicalSurface ImpactSurfaceType, bool bIsFirstPerson);
 private:
 	// Weapon Mesh 1st person view
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Weapon", meta = (AllowPrivateAccess = true))
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
 	// Weapon Mesh 3rd person view
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USkeletalMeshComponent> Mesh3P;;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Weapon", meta = (AllowPrivateAccess = true))
+	TObjectPtr<USkeletalMeshComponent> Mesh3P;
 	
-	void SetMeshVisibilities(APawn* OwningPawn) const;;
+	void SetMeshVisibilities(APawn* OwningPawn) const;
 };
