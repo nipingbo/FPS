@@ -48,6 +48,12 @@ public:
 	float FireTime;
 	
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
+	void Auth_Fire();
+	void Rep_Fire(int32 AuthAmmo);
+	
+	int32 GetMagCapacity() const { return MagCapacity; }
+	int32 GetAmmo() const { return Ammo; };
+	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; };
 protected:
 	virtual void BeginPlay() override;
 
@@ -61,6 +67,18 @@ private:
 	// Weapon Mesh 3rd person view
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Weapon", meta = (AllowPrivateAccess = true))
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
+	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|Ammo")
+	int32 MagCapacity;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Ammo")
+	int32 Ammo;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Ammo")
+	int32 StartingCarriedAmmo;
+	
+	int32 Sequence;
+	
 	
 	void SetMeshVisibilities(APawn* OwningPawn) const;
 };
