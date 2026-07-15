@@ -4,7 +4,6 @@
 #include "Weapon/Weapon.h"
 
 #include "DrawDebugHelpers.h"
-#include "KismetTraceUtils.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "FPS/FPS.h"
 #include "GameFramework/Pawn.h"
@@ -36,6 +35,8 @@ AWeapon::AWeapon()
 	AimFieldOfView = 65.f;
 	TraceRadius = 5.f;
 	TraceLength = 20000.f;
+	FireType = EFireType::SemiAuto;
+	FireTime = 0.1f;
 }
 
 void AWeapon::OnRep_Instigator()
