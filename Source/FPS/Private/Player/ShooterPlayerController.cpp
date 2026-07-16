@@ -7,7 +7,6 @@
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 AShooterPlayerController::AShooterPlayerController()
 {
@@ -39,28 +38,24 @@ void AShooterPlayerController::SetupInputComponent()
 
 void AShooterPlayerController::Input_Crouch()
 {
-	if (!IsValid(GetCharacter())) return;
-	
-	if (UCharacterMovementComponent* CMC = GetCharacter()->GetCharacterMovement(); IsValid(CMC))
-	{
-		CMC->bWantsToCrouch = !CMC->bWantsToCrouch;
-	}
+	ACharacter* Character = GetCharacter();
+	if (!IsValid(Character)) return;
+
+	if (Character->bIsCrouched)
+		Character->UnCrouch();
+	else
+		Character->Crouch();
 }
 
 void AShooterPlayerController::Input_Jump()
 {
-	if (!IsValid(GetCharacter())) return;
-	UCharacterMovementComponent* CMC = GetCharacter()->GetCharacterMovement();
-	if (!IsValid(CMC)) return;
-	
-	if (CMC->bWantsToCrouch)
-	{
-		CMC->bWantsToCrouch = false;
-	}
+	ACharacter* Character = GetCharacter();
+	if (!IsValid(Character)) return;
+
+	if (Character->bIsCrouched)
+		Character->UnCrouch();
 	else
-	{
-		GetCharacter()->Jump();
-	}
+		Character->Jump();
 }
 
 void AShooterPlayerController::Input_Move(const FInputActionValue& InputActionValue)

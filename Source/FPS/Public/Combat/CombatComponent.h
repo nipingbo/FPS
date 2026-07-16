@@ -45,7 +45,8 @@ protected:
 private:
 	bool bTriggerPressed = false;
 	FTimerHandle FireTimer;
-	
+	float LastFireTime = -1.f;
+
 	void FireTimerFinished();
 	
 	UFUNCTION()
@@ -66,9 +67,13 @@ private:
 	// 防止客户端伪造命中位置或目标。
 	UFUNCTION(Server, Reliable)
 	void Server_FireWeapon();
+
+	// 服务端拒绝开枪时通知客户端，让客户端重置预测状态
+	UFUNCTION(Client, Reliable)
+	void Client_FireRejected(int32 AuthAmmo);
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_FireWeapon(const FHitResult& Hit, int32 AuthAmmo);
+	void Multicast_FireWeapon(const FHitResult& Hit);
 	
 	void Local_Aim(bool bPressed);
 	void Local_FireWeapon();

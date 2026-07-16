@@ -48,14 +48,16 @@ public:
 	float FireTime;
 	
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
-	void Auth_Fire();
-	void Rep_Fire(int32 AuthAmmo);
+	bool Auth_Fire();
+	// 服务端拒绝开枪时调用，用权威 Ammo 强制覆盖本地预测值并清空 Sequence
+	void ResetPrediction(int32 AuthAmmo);
 	
 	int32 GetMagCapacity() const { return MagCapacity; }
 	int32 GetAmmo() const { return Ammo; };
 	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; };
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void FireEffects(const FVector& ImpactPoint, const FVector& ImpactNormal, EPhysicalSurface ImpactSurfaceType, bool bIsFirstPerson);
@@ -70,14 +72,17 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category="FPS|Ammo")
 	int32 MagCapacity;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "FPS|Ammo")
+
+	UPROPERTY(EditDefaultsOnly, ReplicatedUsing=OnRep_Ammo, Category = "FPS|Ammo")
 	int32 Ammo;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Ammo")
 	int32 StartingCarriedAmmo;
-	
+
 	int32 Sequence;
+
+	UFUNCTION()
+	void OnRep_Ammo();
 	
 	
 	void SetMeshVisibilities(APawn* OwningPawn) const;

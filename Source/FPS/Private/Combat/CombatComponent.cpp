@@ -47,6 +47,7 @@ void UCombatComponent::Initiate_CycleWeapon()
 
 void UCombatComponent::Initiate_FireWeapon_Pressed()
 {
+	if (!IsValid(CurrentWeapon)) return;
 	bTriggerPressed = true;
 	if (CurrentWeapon->GetAmmo() > 0)
 	{
@@ -91,35 +92,55 @@ void UCombatComponent::FireTimerFinished()
 void UCombatComponent::Server_FireWeapon_Implementation()
 {
 	if (!IsValid(CurrentWeapon)) return;
-	//只有本地操控的client才需要更新自己的Ammo，别的client，包括server不用。
+	// 服务端校验射速：拒绝间隔不足 FireTime 的请求，防止客户端绕过本地 Timer 加速射击
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (LastFireTime >= 0.f && (Now - LastFireTime) < CurrentWeapon->FireTime)
+	{
+		Client_FireRejected(CurrentWeapon->GetAmmo());
+		return;
+	}
+	LastFireTime = Now;
+
+	// Listen Server 上的本地玩家（Host）已在 Local_Fire 里预测扣弹，跳过避免双重扣弹。
+	// 其他情况（Dedicated Server、Listen Server 上的远程客户端）均需在此执行权威扣弹。
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
 	{
-		CurrentWeapon->Auth_Fire();
+		if (!CurrentWeapon->Auth_Fire())
+		{
+			Client_FireRejected(CurrentWeapon->GetAmmo());
+			return;
+		}
 	}
 	FHitResult Hit;
 	CurrentWeapon->WeaponTrace(Hit, CurrentWeapon->TraceLength);
-	Multicast_FireWeapon(Hit, CurrentWeapon->GetAmmo());
+	Multicast_FireWeapon(Hit);
 }
 
-void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit, int32 AuthAmmo)
+void UCombatComponent::Client_FireRejected_Implementation(int32 AuthAmmo)
+{
+	if (IsValid(CurrentWeapon))
+	{
+		CurrentWeapon->ResetPrediction(AuthAmmo);
+	}
+}
+
+void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit)
 {
 	const APawn* Pawn = Cast<APawn>(GetOwner());
 	if (!IsValid(Pawn)) return;
 
 	if (Pawn->IsLocallyControlled())
 	{
-		//把武器当前的Ammo传过去，再更新
-		CurrentWeapon->Rep_Fire(AuthAmmo);
+		// Ammo 校正由 OnRep_Ammo 负责，Multicast 只需触发本地已预测过的效果
 	}
 	else
 	{
 		if (!IsValid(CurrentWeapon)) return;
 		ensure(IsValid(WeaponData));
-		
+
 		EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 		CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, false);
-		
-		//play the fire weapon montage for the first person mesh
+
 		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
 		if (const USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner()); IsValid(Mesh3P) && IsValid(Montage3P))
 		{
