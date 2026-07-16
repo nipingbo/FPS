@@ -47,9 +47,9 @@ AWeapon::AWeapon()
 void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AWeapon, Ammo);
+	// OwnerOnly：只有持枪玩家需要知道弹药数，避免其他客户端触发 OnRep_Ammo 导致预测逻辑错乱
+	DOREPLIFETIME_CONDITION(AWeapon, Ammo, COND_OwnerOnly);
 }
-
 void AWeapon::OnRep_Instigator()
 {
 	Super::OnRep_Instigator();
