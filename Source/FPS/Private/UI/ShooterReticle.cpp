@@ -69,6 +69,7 @@ void UShooterReticle::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 		Image_AmmoCounter->SetOpacity(1.f);
 		OldPawnCombat->OnReticleChanged.RemoveDynamic(this, &ThisClass::OnReticleChanged);
 		OldPawnCombat->OnAmmoCounterChanged.RemoveDynamic(this, &ThisClass::OnAmmoCounterChanged);
+		OldPawnCombat->OnRoundFired.RemoveDynamic(this, &ThisClass::OnRoundFired);
 	}
 	UCombatComponent* NewPawnCombat = UCombatComponent::FindCombatComponent(NewPawn);
 	if (NewPawnCombat)
@@ -77,6 +78,7 @@ void UShooterReticle::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 		Image_AmmoCounter->SetOpacity(1.f);
 		NewPawnCombat->OnReticleChanged.AddDynamic(this, &ThisClass::OnReticleChanged);
 		NewPawnCombat->OnAmmoCounterChanged.AddDynamic(this, &ThisClass::OnAmmoCounterChanged);
+		NewPawnCombat->OnRoundFired.AddDynamic(this, &ThisClass::OnRoundFired);
 	}
 		
 }
@@ -110,5 +112,14 @@ void UShooterReticle::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounter
 	if (IsValid(Image_AmmoCounter))
 	{
 		Image_AmmoCounter->SetBrush(Brush);
+	}
+}
+
+void UShooterReticle::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax)
+{
+	if (CurrentAmmoCounter_DynMatInst.IsValid())
+	{
+		CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Current, RoundsCurrent);
+		CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Max, RoundsMax);
 	}
 }
