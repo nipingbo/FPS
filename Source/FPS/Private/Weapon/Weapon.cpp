@@ -178,7 +178,7 @@ UMaterialInstanceDynamic* AWeapon::GetAmmoCounterDynamicMaterialInstance()
 {
 	if (!IsValid(DynMatInst_AmmoCounter))
 	{
-		DynMatInst_AmmoCounter = UMaterialInstanceDynamic::Create(ReticleMaterial, this);
+		DynMatInst_AmmoCounter = UMaterialInstanceDynamic::Create(AmmoCounterMaterial, this);
 	}
 	return DynMatInst_AmmoCounter;
 }
