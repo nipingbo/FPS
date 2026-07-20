@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "PlayerInterface.generated.h"
 
+class AWeapon;
 struct FGameplayTag;
 // This class does not need to be modified.
 UINTERFACE()
@@ -35,4 +36,7 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void WeaponReplicated();
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	AWeapon* GetCurrentWeapon();
 };

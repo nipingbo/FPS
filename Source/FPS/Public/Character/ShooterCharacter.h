@@ -31,6 +31,7 @@ public:
 	virtual USkeletalMeshComponent* GetMesh1P_Implementation() const override;
 	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
 	virtual void WeaponReplicated_Implementation() override;
+	virtual AWeapon* GetCurrentWeapon_Implementation() override;
 	/* End Of PlayerInterface*/
 
 	virtual void BeginPlay() override;

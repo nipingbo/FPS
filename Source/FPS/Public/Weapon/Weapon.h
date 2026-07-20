@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class UMaterialInstanceDynamic;
 enum EPhysicalSurface : int;
 
 UENUM(BlueprintType)
@@ -55,6 +56,9 @@ public:
 	int32 GetMagCapacity() const { return MagCapacity; }
 	int32 GetAmmo() const { return Ammo; };
 	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; };
+	UMaterialInstanceDynamic* GetReticleDynamicMaterialInstance();
+	UMaterialInstanceDynamic* GetAmmoCounterDynamicMaterialInstance();
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -80,7 +84,19 @@ private:
 	int32 StartingCarriedAmmo;
 
 	int32 Sequence;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
+	TObjectPtr<UMaterialInterface> ReticleMaterial;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
+	TObjectPtr<UMaterialInterface> AmmoCounterMaterial;
 
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> DynMatInst_Reticle;
+	
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> DynMatInst_AmmoCounter;
+	
 	UFUNCTION()
 	void OnRep_Ammo();
 	

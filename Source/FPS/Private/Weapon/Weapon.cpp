@@ -9,6 +9,7 @@
 #include "GameFramework/Pawn.h"
 #include "Interfaces/PlayerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -162,6 +163,24 @@ void AWeapon::ResetPrediction(int32 AuthAmmo)
 	// 服务端拒绝了本次开枪（射速超限或弹药为空），用权威值强制覆盖并清空所有待确认预测
 	Sequence = 0;
 	Ammo = AuthAmmo;
+}
+
+UMaterialInstanceDynamic* AWeapon::GetReticleDynamicMaterialInstance()
+{
+	if (!IsValid(DynMatInst_Reticle))
+	{
+		DynMatInst_Reticle = UMaterialInstanceDynamic::Create(ReticleMaterial, this);
+	}
+	return DynMatInst_Reticle;
+}
+
+UMaterialInstanceDynamic* AWeapon::GetAmmoCounterDynamicMaterialInstance()
+{
+	if (!IsValid(DynMatInst_AmmoCounter))
+	{
+		DynMatInst_AmmoCounter = UMaterialInstanceDynamic::Create(ReticleMaterial, this);
+	}
+	return DynMatInst_AmmoCounter;
 }
 
 void AWeapon::BeginPlay()

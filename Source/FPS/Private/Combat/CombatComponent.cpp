@@ -11,6 +11,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Interfaces/PlayerInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Weapon/Weapon.h"
@@ -207,6 +208,7 @@ void UCombatComponent::SpawnInventory()
 	if (Inventory.Num() > 0)
 	{
 		Equip(Inventory[0]);
+		InitializeWeaponWidgets();
 	}
 }
 
@@ -221,6 +223,16 @@ void UCombatComponent::DestroyInventory()
 	}
 }
 
+void UCombatComponent::InitializeWeaponWidgets() const
+{
+	// Broadcast if weapon is ready
+	if (IsValid(CurrentWeapon))
+	{
+		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance());
+		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+	}
+}
+
 void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 {
 	// Inventory 和 CurrentWeapon 都是 Replicated，但 Actor 属性和 Actor 本体的
@@ -229,6 +241,7 @@ void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 	if (!IsValid(CurrentWeapon)) return;
 	CurrentWeapon->AttachToOwningPawn();
 	IPlayerInterface::Execute_WeaponReplicated(GetOwner());
+	InitializeWeaponWidgets();
 }
 
 
