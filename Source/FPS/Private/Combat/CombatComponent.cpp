@@ -23,11 +23,6 @@ UCombatComponent::UCombatComponent()
 	bTriggerPressed = false;
 }
 
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -187,6 +182,7 @@ void UCombatComponent::Server_Aim_Implementation(bool bPressed)
 void UCombatComponent::Local_Aim(bool bPressed)
 {
 	bAiming = bPressed;
+	OnAimingStatusChanged.Broadcast(bAiming);
 }
 
 void UCombatComponent::Equip(AWeapon* Weapon)

@@ -111,10 +111,6 @@ void AShooterCharacter::PossessedBy(AController* NewController)
 void AShooterCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	if (IsValid(Combat))
-	{
-		Combat->InitializeWeaponWidgets();
-	}
 }
 
 FName AShooterCharacter::GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponType) const
@@ -198,7 +194,7 @@ void AShooterCharacter::CalculateTurnInPlaceParameters(float DeltaTime)
 	float Speed = Velocity.Size2D();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	
-	if (Speed == 0.f && !bIsInAir) //standing, not jumping
+	if (Speed < KINDA_SMALL_NUMBER && !bIsInAir) //standing, not jumping
 	{
 		//get current aim rotation
 		FRotator CurrentAimRotation(0.f, GetBaseAimRotation().Yaw, 0.f);

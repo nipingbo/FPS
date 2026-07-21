@@ -12,7 +12,7 @@ class UCombatComponent;
 class UInputAction;
 class UCameraComponent;
 class USpringArmComponent;
-
+class AWeapon;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWeaponFirstReplicated, AWeapon*, Weapon);
 
 UCLASS()

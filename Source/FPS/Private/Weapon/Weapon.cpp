@@ -89,7 +89,7 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float InTraceLength) const
 	QueryParams.bReturnPhysicalMaterial = true;
 	QueryParams.AddIgnoredActor(GetOwner());
 
-	ensure(GetInstigator());
+	if (!GetInstigator()) return;
 	if (APlayerController* PC = Cast<APlayerController>(GetInstigator()->GetController()); IsValid(PC))
 	{
 		FVector EyesWorldLocation;
@@ -134,6 +134,7 @@ void AWeapon::Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal
 	TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson)
 {
 	FireEffects(ImpactPoint, ImpactNormal, ImpactSurfaceType, bIsFirstPerson);
+	if (!GetInstigator()) return;
 	if (GetInstigator()->IsLocallyControlled())
 	{
 		// 客户端预测扣弹，Sequence 记录"已预测但尚未被服务端确认"的次数

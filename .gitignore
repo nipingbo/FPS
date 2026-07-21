@@ -13,3 +13,6 @@ Saved
 *.xcodeproj
 *.xcworkspace
 .codebuddy
+.cache/
+.clangd
+compile_commands.json
