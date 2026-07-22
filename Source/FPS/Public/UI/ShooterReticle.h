@@ -34,6 +34,7 @@ private:
 	float CornerScaleFactor_Aiming;
 	float ShapeCutFactor_Aiming;
 	bool bAiming;
+	bool bTargetingPlayer;
 	
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
@@ -52,5 +53,8 @@ private:
 	
 	UFUNCTION()
 	void OnAimingStatusChanged(bool bIsAiming);
+	
+	UFUNCTION()
+	void OnTargetingPlayerStatusChanged(bool bTargeting);
 };
 

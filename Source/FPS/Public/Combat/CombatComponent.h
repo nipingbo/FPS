@@ -15,6 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReticleChanged, UMaterialInstanceD
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialInstanceDynamic*, AmmoCounterDynMatInst, int32, RoundsCurrent, int32, RoundsMax);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bTargeting);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -24,6 +25,7 @@ class FPS_API UCombatComponent : public UActorComponent
 public:
 	UCombatComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION(BlueprintPure, Category = "FPS|Combat")
 	static UCombatComponent* FindCombatComponent(const AActor* Actor) { return ( IsValid(Actor) ? Actor->FindComponentByClass<UCombatComponent>() : nullptr); }
@@ -56,6 +58,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FAimingStatusChanged OnAimingStatusChanged;
 	
+	UPROPERTY(BlueprintAssignable)
+	FTargetingPlayerStatusChanged OnTargetingPlayerStatusChanged;
+	
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	bool bAiming;
 	
@@ -65,6 +70,7 @@ public:
 protected:
 	
 private:
+	bool bHitPlayerLastFrame = false;
 	bool bTriggerPressed = false;
 	FTimerHandle FireTimer;
 	float LastFireTime = -1.f;
