@@ -50,7 +50,7 @@ void UShooterReticle::NativeOnInitialized()
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
 		{
-			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->ReticleParams);
+			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->ReticleParams, false);
 			OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
 		}
 	}
@@ -67,8 +67,9 @@ void UShooterReticle::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	ShapeCutFactor_RoundFired = FMath::FInterpTo(ShapeCutFactor_RoundFired, 0.f, InDeltaTime, CurrentReticleParams.RoundFiredInterpSpeed);
 	CornerScaleFactor_Aiming = FMath::FInterpTo(CornerScaleFactor_Aiming, bAiming ? CurrentReticleParams.ScaleFactor_Aiming : CurrentReticleParams.ScaleFactor_NotAiming, InDeltaTime, CurrentReticleParams.AimingInterpSpeed);
 	ShapeCutFactor_Aiming = FMath::FInterpTo(ShapeCutFactor_Aiming, bAiming ? CurrentReticleParams.ShapeCutFactor_Aiming : CurrentReticleParams.ShapeCutFactor_NotAiming, InDeltaTime, CurrentReticleParams.AimingInterpSpeed);
-
-	BaseCornerScaleFactor = CornerScaleFactor_RoundFired + CornerScaleFactor_Aiming;
+	CornerScaleFactor_TargetingPlayer = FMath::FInterpTo(CornerScaleFactor_TargetingPlayer, bTargetingPlayer ? CurrentReticleParams.ScaleFactor_Targeting : CurrentReticleParams.ScaleFactor_NotTargeting, InDeltaTime, CurrentReticleParams.TargetingPlayerInterpSpeed);
+	
+	BaseCornerScaleFactor = CornerScaleFactor_RoundFired + CornerScaleFactor_Aiming + CornerScaleFactor_TargetingPlayer;
 	BaseShapeCutFactor = ShapeCutFactor_RoundFired + ShapeCutFactor_Aiming;
 	
 	if (CurrentReticle_DynMatInst.IsValid())
@@ -108,11 +109,11 @@ void UShooterReticle::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 void UShooterReticle::OnWeaponFirstReplicated(AWeapon* Weapon)
 {
 	//get dynamic material instance from the weapon
-	OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->ReticleParams);
+	OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->ReticleParams, false);
 	OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->GetAmmo(), Weapon->GetMagCapacity());
 }
 
-void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynMatInst, const FReticleParams& ReticleParams)
+void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynMatInst, const FReticleParams& ReticleParams, bool bCurrentTargetingPlayer)
 {
 	CurrentReticle_DynMatInst = ReticleDynMatInst;
 	CurrentReticleParams = ReticleParams;
@@ -122,6 +123,7 @@ void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynMatIn
 	{
 		Image_Reticle->SetBrush(Brush);
 	}
+	OnTargetingPlayerStatusChanged(bCurrentTargetingPlayer);
 }
 
 void UShooterReticle::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynMatInst, int32 RoundsCurrent,
