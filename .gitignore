@@ -21,3 +21,6 @@ Source/FPS/Public/Arena
 
 # 本地个人构建脚本 (封装 UE 编译命令，不提交)
 local_build.sh
+
+# 超过100MB的大文件，无法上传GitHub
+Content/Effects/Textures/Flipbooks/SmokeSwirl_3_Flipbook_CHANNELPACK.uasset
