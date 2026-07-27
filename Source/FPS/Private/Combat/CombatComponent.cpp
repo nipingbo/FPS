@@ -226,7 +226,7 @@ void UCombatComponent::OnRep_CurrentReserveAmmo()
 {
 	if (IsValid(CurrentWeapon))
 	{
-		OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo());
+		OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo(), CurrentWeapon->WeaponIcon);
 	}
 }
 
@@ -253,7 +253,7 @@ void UCombatComponent::Equip(AWeapon* Weapon)
 		CurrentReserveAmmo = 0;
 	}
 
-	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, Weapon->GetAmmo());
+	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, Weapon->GetAmmo(), Weapon->WeaponIcon);
 }
 
 void UCombatComponent::SpawnInventory()

@@ -52,6 +52,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "FPS|Reticle")
 	FReticleParams ReticleParams;
 	
+	UPROPERTY(EditAnywhere, Category = "FPS|Reticle")
+	TObjectPtr<UMaterialInterface> WeaponIcon;
+	
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
 	bool Auth_Fire();
 	// 服务端拒绝开枪时调用，用权威 Ammo 强制覆盖本地预测值并清空 Sequence
