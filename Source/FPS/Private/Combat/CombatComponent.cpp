@@ -240,7 +240,19 @@ void UCombatComponent::Equip(AWeapon* Weapon)
 {
 	CurrentWeapon = Weapon;
 	CurrentWeapon->AttachToOwningPawn();
-	CurrentReserveAmmo = ReserveAmmo.FindChecked(CurrentWeapon->WeaponType);
+
+	if (const int32* FoundReserve = ReserveAmmo.Find(Weapon->WeaponType))
+	{
+		CurrentReserveAmmo = *FoundReserve;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Equip: no reserve ammo mapped for weapon type %s — defaulting to 0"),
+			*Weapon->WeaponType.ToString());
+		CurrentReserveAmmo = 0;
+	}
+
 	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, Weapon->GetAmmo());
 }
 
