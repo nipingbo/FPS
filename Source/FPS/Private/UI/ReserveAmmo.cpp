@@ -23,7 +23,7 @@ void UReserveAmmo::NativeOnInitialized()
 	
 	OnPossessedPawnChanged(nullptr, ShooterCharacter);
 	
-	if (ShooterCharacter->HasWeaponFirstReplicated())
+	if (ShooterCharacter->HasWeaponFirstReplicated() || ShooterCharacter->HasAuthority())
 	{
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
