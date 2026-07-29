@@ -39,10 +39,19 @@ public:
 	void Initiate_Aim_Pressed();
 	void Initiate_Aim_Released();
 	
+	void Notify_CycleWeapon();
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Weapon")
 	TObjectPtr<UWeaponData> WeaponData;
 	
 	void Equip(AWeapon* Weapon);
+	
+	void EquipWeapon(AWeapon* Weapon);
+	UFUNCTION(Server, Reliable)
+	void Server_EquipWeapon(AWeapon* Weapon);
+	UFUNCTION()
+	void BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted);
+	
 	void SpawnInventory();
 	void DestroyInventory();
 	
@@ -89,6 +98,8 @@ private:
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	
+	void SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon);
+	
 	UPROPERTY(Transient, Replicated)
 	TArray<AWeapon*> Inventory;
 	
@@ -117,4 +128,15 @@ private:
 	
 	void Local_Aim(bool bPressed);
 	void Local_FireWeapon();
+	
+	int32 AdvanceWeaponIndex();
+	int32 Local_WeaponIndex;
+	
+	void Local_CycleWeapon(int32 WeaponIndex);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_CycleWeapon(int32 WeaponIndex);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_CycleWeapon(int32 WeaponIndex);
 };

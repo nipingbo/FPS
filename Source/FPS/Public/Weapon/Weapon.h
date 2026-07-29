@@ -9,6 +9,7 @@
 #include "Weapon.generated.h"
 
 class UMaterialInstanceDynamic;
+class APawn;
 enum EPhysicalSurface : int;
 
 UENUM(BlueprintType)
@@ -16,6 +17,16 @@ enum class EFireType : uint8
 {
 	Auto UMETA(DisplayName = "Automatic"),
 	SemiAuto UMETA(DisplayName = "Semi Automatic"),
+};
+
+UENUM(BlueprintType)
+enum class EWeaponStatus : uint8
+{
+	Idle,			// Weapon doing nothing, can fire/reload/cycle
+	Firing,			// Currently firing, can't reload/cycle
+	Reloading,		// Currently Reloading, can't fire/cycle
+	Cycling,		// Currently Cycling to the next weapon, can't fire/reload/cycle
+	Unequipped		// On our peron, but can't do anything
 };
 UCLASS()
 class FPS_API AWeapon : public AActor
@@ -28,7 +39,8 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const;
 	USkeletalMeshComponent* GetMesh3P() const;
 
-	void AttachToOwningPawn() const;
+	void AttachToOwningPawn(APawn* Pawn) const;
+	void DetachFromOwningPawn() const;
 	void WeaponTrace(FHitResult& OutHit, float TraceLength) const;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FPS|WeaponType")
@@ -63,6 +75,9 @@ public:
 	int32 GetMagCapacity() const { return MagCapacity; }
 	int32 GetAmmo() const { return Ammo; };
 	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; };
+	
+	EWeaponStatus WeaponStatus;
+	
 	UMaterialInstanceDynamic* GetReticleDynamicMaterialInstance();
 	UMaterialInstanceDynamic* GetAmmoCounterDynamicMaterialInstance();
 	

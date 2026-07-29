@@ -43,6 +43,7 @@ AWeapon::AWeapon()
 	Ammo = 5;
 	StartingCarriedAmmo = 10;
 	Sequence = 0;
+	WeaponStatus = EWeaponStatus::Unequipped;
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -54,7 +55,22 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLif
 void AWeapon::OnRep_Instigator()
 {
 	Super::OnRep_Instigator();
-	AttachToOwningPawn();
+
+	// 只有“当前装备的武器”才挂接到角色身上。库存里的其他武器也会随复制到达并触发
+	// OnRep_Instigator，若无条件挂接，客户端会以“最后到达的武器”覆盖显示，导致看到
+	// 错误的武器（例如 server 端拿 Pistol，client 却看到下一把 Rifle）。
+	if (APawn* Pawn = GetInstigator())
+	{
+		if (Pawn->Implements<UPlayerInterface>())
+		{
+			if (IPlayerInterface::Execute_GetCurrentWeapon(Pawn) == this)
+			{
+				AttachToOwningPawn(Pawn);
+			}
+			return;
+		}
+	}
+	AttachToOwningPawn(GetInstigator());
 }
 
 USkeletalMeshComponent* AWeapon::GetMesh1P() const
@@ -67,20 +83,28 @@ USkeletalMeshComponent* AWeapon::GetMesh3P() const
 	return Mesh3P;
 }
 
-void AWeapon::AttachToOwningPawn() const
+void AWeapon::AttachToOwningPawn(APawn* Pawn) const
 {
-	APawn* OwningPawn = GetInstigator();
-	if (!IsValid(OwningPawn) || !OwningPawn->Implements<UPlayerInterface>()) return;
+	if (!IsValid(Pawn) || !Pawn->Implements<UPlayerInterface>()) return;
 	
-	SetMeshVisibilities(OwningPawn);
+	SetMeshVisibilities(Pawn);
 	
-	const FName AttachPoint = IPlayerInterface::Execute_GetWeaponAttachPoint(OwningPawn, WeaponType);
-	USkeletalMeshComponent* PawnMesh1P = IPlayerInterface::Execute_GetMesh1P(OwningPawn);
-	USkeletalMeshComponent* PawnMesh3P = IPlayerInterface::Execute_GetMesh3P(OwningPawn);
+	const FName AttachPoint = IPlayerInterface::Execute_GetWeaponAttachPoint(Pawn, WeaponType);
+	USkeletalMeshComponent* PawnMesh1P = IPlayerInterface::Execute_GetMesh1P(Pawn);
+	USkeletalMeshComponent* PawnMesh3P = IPlayerInterface::Execute_GetMesh3P(Pawn);
 	
 	Mesh1P->AttachToComponent(PawnMesh1P, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
 	Mesh3P->AttachToComponent(PawnMesh3P, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
 	
+}
+
+void AWeapon::DetachFromOwningPawn() const
+{
+	Mesh1P->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	Mesh1P->SetHiddenInGame(true);
+	
+	Mesh3P->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	Mesh3P->SetHiddenInGame(true);
 }
 
 void AWeapon::WeaponTrace(FHitResult& OutHit, float InTraceLength) const
