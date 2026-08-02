@@ -190,8 +190,10 @@ int32 UCombatComponent::AdvanceWeaponIndex()
 
 void UCombatComponent::Local_CycleWeapon(int32 WeaponIndex)
 {
+	// 索引来自客户端 RPC，必须校验范围；CurrentWeapon 可能尚未复制到本端
+	if (!Inventory.IsValidIndex(WeaponIndex)) return;
 	AWeapon* NextWeapon = Inventory[WeaponIndex];
-	if (!IsValid(NextWeapon) || !IsValid(WeaponData)) return;
+	if (!IsValid(NextWeapon) || !IsValid(CurrentWeapon) || !IsValid(WeaponData)) return;
 	CurrentWeapon->WeaponStatus = EWeaponStatus::Cycling;
 	NextWeapon->WeaponStatus = EWeaponStatus::Cycling;
 	
@@ -221,6 +223,7 @@ void UCombatComponent::Local_CycleWeapon(int32 WeaponIndex)
 void UCombatComponent::Notify_CycleWeapon()
 {
 	if (!IsValid(CurrentWeapon)) return;
+	if (!Inventory.IsValidIndex(Local_WeaponIndex)) return;
 	AWeapon* NewWeapon = Inventory[Local_WeaponIndex];
 	if (IsValid(NewWeapon))
 	{
@@ -231,7 +234,7 @@ void UCombatComponent::Notify_CycleWeapon()
 void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted)
 {
 	UAnimInstance* AnimInstance = IPlayerInterface::Execute_GetMesh1P(GetOwner())->GetAnimInstance();
-	if (IsValid(AnimInstance) && AnimInstance->OnMontageBlendingOut.IsBound(this, &ThisClass::BlendOut_CycleWeapon))
+	if (IsValid(AnimInstance) && AnimInstance->OnMontageBlendingOut.IsAlreadyBound(this, &ThisClass::BlendOut_CycleWeapon))
 	{
 			AnimInstance->OnMontageBlendingOut.RemoveDynamic(this, &ThisClass::BlendOut_CycleWeapon);
 	}
@@ -246,6 +249,8 @@ void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterru
 
 void UCombatComponent::Server_CycleWeapon_Implementation(int32 WeaponIndex)
 {
+	// 客户端传来的索引不可信，越界会导致所有端 Inventory[WeaponIndex] 崩溃
+	if (!Inventory.IsValidIndex(WeaponIndex)) return;
 	Local_WeaponIndex = WeaponIndex;
 	Multicast_CycleWeapon(WeaponIndex);
 }
@@ -352,6 +357,8 @@ void UCombatComponent::EquipWeapon(AWeapon* Weapon)
 
 void UCombatComponent::Server_EquipWeapon_Implementation(AWeapon* Weapon)
 {
+	// 只接受库存内的武器，防止客户端传任意 Weapon Actor 作弊
+	if (!Inventory.Contains(Weapon)) return;
 	EquipWeapon(Weapon);
 }
 
@@ -392,6 +399,11 @@ void UCombatComponent::SpawnInventory()
 	for (auto& WeaponClass : DefaultWeaponClasses)
 	{
 		AWeapon* Weapon = SpawnWeapon(WeaponClass);
+		if (!IsValid(Weapon))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SpawnInventory: DefaultWeaponClasses contains an invalid entry, skipping"));
+			continue;
+		}
 		Inventory.AddUnique(Weapon);
 		ReserveAmmo.Add(Weapon->WeaponType, Weapon->GetStartingCarriedAmmo());
 	}
@@ -430,6 +442,16 @@ void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 	// 复制顺序不保证。此处 CurrentWeapon 无效说明 Weapon Actor 本体还未到达客户端，
 	// 直接返回即可——AWeapon::OnRep_Instigator 会在 Actor 就绪后补调 AttachToOwningPawn。
 	if (!IsValid(CurrentWeapon)) return;
+
+	// 在客户端卸下旧武器：SetCurrentWeapon 的 Detach 只在 authority 端执行，
+	// 而 SetHiddenInGame 不复制，客户端必须自己隐藏旧武器，否则换枪后新旧武器
+	// 同时可见，画面从第二次切换起不再变化
+	if (IsValid(LastWeapon) && LastWeapon != CurrentWeapon)
+	{
+		LastWeapon->DetachFromOwningPawn();
+		LastWeapon->WeaponStatus = EWeaponStatus::Unequipped;
+	}
+
 	CurrentWeapon->AttachToOwningPawn(Cast<APawn>(GetOwner()));
 	IPlayerInterface::Execute_WeaponReplicated(GetOwner());
 	InitializeWeaponWidgets();

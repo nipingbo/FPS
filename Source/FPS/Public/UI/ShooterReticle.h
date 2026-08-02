@@ -27,15 +27,15 @@ private:
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentReticle_DynMatInst;
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentAmmoCounter_DynMatInst;
 	FReticleParams CurrentReticleParams;
-	float BaseCornerScaleFactor;
-	float BaseShapeCutFactor;
-	float CornerScaleFactor_RoundFired;
-	float ShapeCutFactor_RoundFired;
-	float CornerScaleFactor_Aiming;
-	float ShapeCutFactor_Aiming;
-	float CornerScaleFactor_TargetingPlayer;
-	bool bAiming;
-	bool bTargetingPlayer;
+	float BaseCornerScaleFactor = 0.f;
+	float BaseShapeCutFactor = 0.f;
+	float CornerScaleFactor_RoundFired = 0.f;
+	float ShapeCutFactor_RoundFired = 0.f;
+	float CornerScaleFactor_Aiming = 0.f;
+	float ShapeCutFactor_Aiming = 0.f;
+	float CornerScaleFactor_TargetingPlayer = 0.f;
+	bool bAiming = false;
+	bool bTargetingPlayer = false;
 	
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
