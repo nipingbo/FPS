@@ -98,6 +98,8 @@ void UCombatComponent::Local_FireWeapon()
 {
 	if (!IsValid(CurrentWeapon)) return;
 	ensure(IsValid(WeaponData));
+	
+	CurrentWeapon->WeaponStatus = EWeaponStatus::Firing;
 	//play the fire weapon montage for the first person mesh
 	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
 	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner());
@@ -122,6 +124,7 @@ void UCombatComponent::Local_FireWeapon()
 void UCombatComponent::Server_FireWeapon_Implementation()
 {
 	if (!IsValid(CurrentWeapon)) return;
+	if (CurrentWeapon->GetAmmo() <= 0) return;
 	// 服务端校验射速：拒绝间隔不足 FireTime 的请求，防止客户端绕过本地 Timer 加速射击
 	const float Now = GetWorld()->GetTimeSeconds();
 	if (LastFireTime >= 0.f && (Now - LastFireTime) < CurrentWeapon->FireTime)
@@ -272,6 +275,10 @@ void UCombatComponent::Multicast_CycleWeapon_Implementation(int32 WeaponIndex)
 void UCombatComponent::FireTimerFinished()
 {
 	if (!IsValid(CurrentWeapon)) return;
+	if (CurrentWeapon->WeaponStatus == EWeaponStatus::Firing)
+	{
+		CurrentWeapon->WeaponStatus = EWeaponStatus::Idle;
+	}
 	if (bTriggerPressed && CurrentWeapon->FireType == EFireType::Auto && CurrentWeapon->GetAmmo() > 0)
 	{
 		Local_FireWeapon();
