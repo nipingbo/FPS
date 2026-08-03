@@ -84,6 +84,58 @@ void UCombatComponent::Initiate_CycleWeapon()
 	Local_CycleWeapon(Local_WeaponIndex);
 }
 
+void UCombatComponent::Local_CycleWeapon(int32 WeaponIndex)
+{
+	// 索引来自客户端 RPC，必须校验范围；CurrentWeapon 可能尚未复制到本端
+	if (!Inventory.IsValidIndex(WeaponIndex)) return;
+	AWeapon* NextWeapon = Inventory[WeaponIndex];
+	if (!IsValid(NextWeapon) || !IsValid(CurrentWeapon) || !IsValid(WeaponData)) return;
+	CurrentWeapon->WeaponStatus = EWeaponStatus::Cycling;
+	NextWeapon->WeaponStatus = EWeaponStatus::Cycling;
+	
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	const bool bIsLocal = IsValid(OwningPawn) && OwningPawn->IsLocallyControlled();
+	
+	const FMontageData& MontageData = bIsLocal ? 
+		WeaponData->FirstPersonMontages.FindChecked(NextWeapon->WeaponType) : 
+		WeaponData->ThirdPersonMontages.FindChecked(NextWeapon->WeaponType);
+
+	const USkeletalMeshComponent* Mesh = bIsLocal ? 
+		IPlayerInterface::Execute_GetMesh1P(GetOwner()) : 
+		IPlayerInterface::Execute_GetMesh3P(GetOwner());
+	
+	if (IsValid(Mesh) && IsValid(MontageData.EquipMontage))
+	{
+		Mesh->GetAnimInstance()->Montage_Play(MontageData.EquipMontage);
+	}
+	if (bIsLocal)
+	{
+		Server_CycleWeapon(WeaponIndex);
+		Mesh->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &ThisClass::BlendOut_CycleWeapon);
+	}
+}
+
+
+void UCombatComponent::Server_CycleWeapon_Implementation(int32 WeaponIndex)
+{
+	// 客户端传来的索引不可信，越界会导致所有端 Inventory[WeaponIndex] 崩溃
+	if (!Inventory.IsValidIndex(WeaponIndex)) return;
+	Local_WeaponIndex = WeaponIndex;
+	Multicast_CycleWeapon(WeaponIndex);
+}
+
+void UCombatComponent::Multicast_CycleWeapon_Implementation(int32 WeaponIndex)
+{
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (!IsValid(OwningPawn)) return;
+	
+	if (!OwningPawn->IsLocallyControlled())
+	{
+		Local_WeaponIndex = WeaponIndex;
+		Local_CycleWeapon(WeaponIndex);
+	}
+}
+
 void UCombatComponent::Initiate_FireWeapon_Pressed()
 {
 	if (!IsValid(CurrentWeapon)) return;
@@ -191,38 +243,6 @@ int32 UCombatComponent::AdvanceWeaponIndex()
 	return Local_WeaponIndex;
 }
 
-void UCombatComponent::Local_CycleWeapon(int32 WeaponIndex)
-{
-	// 索引来自客户端 RPC，必须校验范围；CurrentWeapon 可能尚未复制到本端
-	if (!Inventory.IsValidIndex(WeaponIndex)) return;
-	AWeapon* NextWeapon = Inventory[WeaponIndex];
-	if (!IsValid(NextWeapon) || !IsValid(CurrentWeapon) || !IsValid(WeaponData)) return;
-	CurrentWeapon->WeaponStatus = EWeaponStatus::Cycling;
-	NextWeapon->WeaponStatus = EWeaponStatus::Cycling;
-	
-	APawn* OwningPawn = Cast<APawn>(GetOwner());
-	const bool bIsLocal = IsValid(OwningPawn) && OwningPawn->IsLocallyControlled();
-	
-	const FMontageData& MontageData = bIsLocal ? 
-		WeaponData->FirstPersonMontages.FindChecked(NextWeapon->WeaponType) : 
-		WeaponData->ThirdPersonMontages.FindChecked(NextWeapon->WeaponType);
-
-	const USkeletalMeshComponent* Mesh = bIsLocal ? 
-		IPlayerInterface::Execute_GetMesh1P(GetOwner()) : 
-		IPlayerInterface::Execute_GetMesh3P(GetOwner());
-	
-	if (IsValid(Mesh) && IsValid(MontageData.EquipMontage))
-	{
-		Mesh->GetAnimInstance()->Montage_Play(MontageData.EquipMontage);
-	}
-	if (bIsLocal)
-	{
-		Server_CycleWeapon(WeaponIndex);
-		Mesh->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &ThisClass::BlendOut_CycleWeapon);
-	}
-	
-}
-
 void UCombatComponent::Notify_CycleWeapon()
 {
 	if (!IsValid(CurrentWeapon)) return;
@@ -252,26 +272,6 @@ void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterru
 	}
 }
 
-void UCombatComponent::Server_CycleWeapon_Implementation(int32 WeaponIndex)
-{
-	// 客户端传来的索引不可信，越界会导致所有端 Inventory[WeaponIndex] 崩溃
-	if (!Inventory.IsValidIndex(WeaponIndex)) return;
-	Local_WeaponIndex = WeaponIndex;
-	Multicast_CycleWeapon(WeaponIndex);
-}
-
-void UCombatComponent::Multicast_CycleWeapon_Implementation(int32 WeaponIndex)
-{
-	APawn* OwningPawn = Cast<APawn>(GetOwner());
-	if (!IsValid(OwningPawn)) return;
-	
-	if (!OwningPawn->IsLocallyControlled())
-	{
-		Local_WeaponIndex = WeaponIndex;
-		Local_CycleWeapon(WeaponIndex);
-	}
-}
-
 void UCombatComponent::FireTimerFinished()
 {
 	if (!IsValid(CurrentWeapon)) return;
@@ -292,13 +292,47 @@ void UCombatComponent::Initiate_FireWeapon_Released()
 
 void UCombatComponent::Initiate_ReloadWeapon()
 {
-	GEngine->AddOnScreenDebugMessage(
-		-1, 
-		5.f, 
-		FColor::Cyan, 
-		TEXT("Initiate_ReloadWeapon"), 
-		false);
+	if (!IsValid(CurrentWeapon)) return;
+	if (CurrentWeapon->WeaponStatus == EWeaponStatus::Cycling || CurrentWeapon->WeaponStatus == EWeaponStatus::Reloading) return;
+	if (CurrentWeapon->GetAmmo() == CurrentWeapon->GetMagCapacity()) return;
+	if (CurrentReserveAmmo == 0) return;
+	Local_ReloadWeapon();
+	Server_ReloadWeapon();
 }
+
+void UCombatComponent::Local_ReloadWeapon()
+{
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (!IsValid(CurrentWeapon) || !IsValid(OwningPawn)) return;
+	ensure(WeaponData);
+	
+	const bool bIsLocal = OwningPawn->IsLocallyControlled();
+	UAnimMontage* ReloadMontage = bIsLocal ? WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage : WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage;
+	USkeletalMeshComponent* Mesh = bIsLocal ? IPlayerInterface::Execute_GetMesh1P(OwningPawn) : IPlayerInterface::Execute_GetMesh3P(OwningPawn);
+	if (IsValid(ReloadMontage) && IsValid(Mesh))
+	{
+		Mesh->GetAnimInstance()->Montage_Play(ReloadMontage);
+	}
+	
+	UAnimMontage* WeaponReloadMontage = WeaponData->WeaponMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage;
+	USkeletalMeshComponent* WeaponMesh = bIsLocal ? CurrentWeapon->GetMesh1P() : CurrentWeapon->GetMesh3P();
+	if (IsValid(WeaponReloadMontage) && IsValid(WeaponMesh))
+	{
+		WeaponMesh->GetAnimInstance()->Montage_Play(WeaponReloadMontage);
+	}
+	CurrentWeapon->WeaponStatus = EWeaponStatus::Reloading;
+}
+
+void UCombatComponent::Server_ReloadWeapon_Implementation()
+{
+	Multicast_ReloadWeapon(CurrentWeapon->GetAmmo(), CurrentReserveAmmo);
+}
+
+void UCombatComponent::Multicast_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
+{
+	Local_ReloadWeapon();
+}
+
 
 void UCombatComponent::Initiate_Aim_Pressed()
 {
