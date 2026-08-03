@@ -88,7 +88,7 @@ void UCombatComponent::Initiate_FireWeapon_Pressed()
 {
 	if (!IsValid(CurrentWeapon)) return;
 	bTriggerPressed = true;
-	if (CurrentWeapon->GetAmmo() > 0)
+	if (CurrentWeapon->WeaponStatus == EWeaponStatus::Idle && CurrentWeapon->GetAmmo() > 0)
 	{
 		Local_FireWeapon();
 	}
@@ -239,12 +239,14 @@ void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterru
 			AnimInstance->OnMontageBlendingOut.RemoveDynamic(this, &ThisClass::BlendOut_CycleWeapon);
 	}
 	CurrentWeapon->WeaponStatus = EWeaponStatus::Idle;
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.f,
-		FColor::Red,
-		TEXT("BlendOut CycleWeapon"),
-		false);
+	OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance(), CurrentWeapon->ReticleParams, bHitPlayer);
+	OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->GetAmmo(), CurrentWeapon->GetMagCapacity());
+	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->GetAmmo(), CurrentWeapon->WeaponIcon);
+	
+	if (bTriggerPressed && CurrentWeapon->FireType == EFireType::Auto && CurrentWeapon->GetAmmo() > 0)
+	{
+		Local_FireWeapon();
+	}
 }
 
 void UCombatComponent::Server_CycleWeapon_Implementation(int32 WeaponIndex)

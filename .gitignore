@@ -19,7 +19,8 @@ compile_commands.json
 Source/FPS/Private/Arena
 Source/FPS/Public/Arena
 Plugins/Developer/RiderLink/*.*
-
+.idea
+Plugins
 
 # 本地个人构建脚本 (封装 UE 编译命令，不提交)
 local_build.sh

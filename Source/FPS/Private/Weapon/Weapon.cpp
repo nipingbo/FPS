@@ -43,7 +43,7 @@ AWeapon::AWeapon()
 	Ammo = 5;
 	StartingCarriedAmmo = 10;
 	Sequence = 0;
-	WeaponStatus = EWeaponStatus::Unequipped;
+	WeaponStatus = EWeaponStatus::Idle;
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
