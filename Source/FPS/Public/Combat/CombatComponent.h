@@ -11,6 +11,8 @@
 class AWeapon;
 class UWeaponData;
 class UMaterialInstanceDynamic;
+class UAnimMontage;
+class USkeletalMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReticleChanged, UMaterialInstanceDynamic*, ReticleDynMatInst, const FReticleParams&, ReticleParams, bool, bCurrentTargetingPlayer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialInstanceDynamic*, AmmoCounterDynMatInst, int32, RoundsCurrent, int32, RoundsMax);
@@ -18,6 +20,15 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRoundFired, int32, RoundsCurrent
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bTargeting);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon, UMaterialInterface*, WeaponIconMaterial);
+
+// 用于按武器类型和槽位从 WeaponData 中选取要播放的蒙太奇
+UENUM()
+enum class ECombatMontageSlot : uint8
+{
+	Equip,
+	Reload,
+	Fire,
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -142,8 +153,12 @@ private:
 	void Local_ReloadWeapon();
 	UFUNCTION(Server, Reliable)
 	void Server_ReloadWeapon();
-	UFUNCTION(Multicast, Reliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
-	
-	void PlayMontages(FGameplayTag WeaponType, );
+
+	/* 蒙太奇播放辅助 */
+	bool PlayMontageOnMesh(const USkeletalMeshComponent* Mesh, UAnimMontage* Montage) const;
+	const USkeletalMeshComponent* GetViewMesh(bool bIsLocal) const;
+	UAnimMontage* GetBodyMontage(const FGameplayTag& WeaponType, ECombatMontageSlot Slot, bool bIsLocal) const;
+	UAnimMontage* GetWeaponMontage(const FGameplayTag& WeaponType, ECombatMontageSlot Slot) const;
 };

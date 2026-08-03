@@ -96,22 +96,21 @@ void UCombatComponent::Local_CycleWeapon(int32 WeaponIndex)
 	APawn* OwningPawn = Cast<APawn>(GetOwner());
 	const bool bIsLocal = IsValid(OwningPawn) && OwningPawn->IsLocallyControlled();
 	
-	const FMontageData& MontageData = bIsLocal ? 
-		WeaponData->FirstPersonMontages.FindChecked(NextWeapon->WeaponType) : 
-		WeaponData->ThirdPersonMontages.FindChecked(NextWeapon->WeaponType);
+	// 只在 montage 真正播放成功时才绑定 blend-out，避免误触发
+	const bool bMontagePlayed = PlayMontageOnMesh(
+		GetViewMesh(bIsLocal),
+		GetBodyMontage(NextWeapon->WeaponType, ECombatMontageSlot::Equip, bIsLocal));
 
-	const USkeletalMeshComponent* Mesh = bIsLocal ? 
-		IPlayerInterface::Execute_GetMesh1P(GetOwner()) : 
-		IPlayerInterface::Execute_GetMesh3P(GetOwner());
-	
-	if (IsValid(Mesh) && IsValid(MontageData.EquipMontage))
-	{
-		Mesh->GetAnimInstance()->Montage_Play(MontageData.EquipMontage);
-	}
 	if (bIsLocal)
 	{
 		Server_CycleWeapon(WeaponIndex);
-		Mesh->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &ThisClass::BlendOut_CycleWeapon);
+		if (bMontagePlayed)
+		{
+			if (UAnimInstance* AnimInstance = GetViewMesh(bIsLocal)->GetAnimInstance(); IsValid(AnimInstance))
+			{
+				AnimInstance->OnMontageBlendingOut.AddDynamic(this, &ThisClass::BlendOut_CycleWeapon);
+			}
+		}
 	}
 }
 
@@ -153,12 +152,9 @@ void UCombatComponent::Local_FireWeapon()
 	
 	CurrentWeapon->WeaponStatus = EWeaponStatus::Firing;
 	//play the fire weapon montage for the first person mesh
-	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
-	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner());
-	if (IsValid(Mesh1P) && IsValid(Montage1P))
-	{
-		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
-	}
+	PlayMontageOnMesh(
+		GetViewMesh(true),
+		GetBodyMontage(CurrentWeapon->WeaponType, ECombatMontageSlot::Fire, true));
 	// 本地做 Trace 只用于立即播放本地特效（枪口火焰、弹孔贴花等），
 	// 不把结果上传服务端，避免外挂伪造命中数据。
 	FHitResult Hit;
@@ -226,11 +222,9 @@ void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit
 		EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 		CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, false);
 
-		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
-		if (const USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner()); IsValid(Mesh3P) && IsValid(Montage3P))
-		{
-			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
-		}
+		PlayMontageOnMesh(
+			GetViewMesh(false),
+			GetBodyMontage(CurrentWeapon->WeaponType, ECombatMontageSlot::Fire, false));
 	}
 }
 
@@ -307,20 +301,74 @@ void UCombatComponent::Local_ReloadWeapon()
 	ensure(WeaponData);
 	
 	const bool bIsLocal = OwningPawn->IsLocallyControlled();
-	UAnimMontage* ReloadMontage = bIsLocal ? WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage : WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage;
-	USkeletalMeshComponent* Mesh = bIsLocal ? IPlayerInterface::Execute_GetMesh1P(OwningPawn) : IPlayerInterface::Execute_GetMesh3P(OwningPawn);
-	if (IsValid(ReloadMontage) && IsValid(Mesh))
-	{
-		Mesh->GetAnimInstance()->Montage_Play(ReloadMontage);
-	}
-	
-	UAnimMontage* WeaponReloadMontage = WeaponData->WeaponMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage;
-	USkeletalMeshComponent* WeaponMesh = bIsLocal ? CurrentWeapon->GetMesh1P() : CurrentWeapon->GetMesh3P();
-	if (IsValid(WeaponReloadMontage) && IsValid(WeaponMesh))
-	{
-		WeaponMesh->GetAnimInstance()->Montage_Play(WeaponReloadMontage);
-	}
+
+	// 身体动画：与换枪同一条查找路径
+	PlayMontageOnMesh(
+		GetViewMesh(bIsLocal),
+		GetBodyMontage(CurrentWeapon->WeaponType, ECombatMontageSlot::Reload, bIsLocal));
+
+	// 武器自身动画：Reload 特有，走独立的 WeaponMontages 表
+	PlayMontageOnMesh(
+		bIsLocal ? CurrentWeapon->GetMesh1P() : CurrentWeapon->GetMesh3P(),
+		GetWeaponMontage(CurrentWeapon->WeaponType, ECombatMontageSlot::Reload));
+
 	CurrentWeapon->WeaponStatus = EWeaponStatus::Reloading;
+}
+
+bool UCombatComponent::PlayMontageOnMesh(const USkeletalMeshComponent* Mesh, UAnimMontage* Montage) const
+{
+	if (!IsValid(Mesh) || !IsValid(Montage)) return false;
+	if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance(); IsValid(AnimInstance))
+	{
+		AnimInstance->Montage_Play(Montage);
+		return true;
+	}
+	return false;
+}
+
+const USkeletalMeshComponent* UCombatComponent::GetViewMesh(bool bIsLocal) const
+{
+	return bIsLocal
+		? IPlayerInterface::Execute_GetMesh1P(GetOwner())
+		: IPlayerInterface::Execute_GetMesh3P(GetOwner());
+}
+
+UAnimMontage* UCombatComponent::GetBodyMontage(const FGameplayTag& WeaponType, ECombatMontageSlot Slot, bool bIsLocal) const
+{
+	if (!IsValid(WeaponData)) return nullptr;
+
+	const TMap<FGameplayTag, FMontageData>& Montages = bIsLocal
+		? WeaponData->FirstPersonMontages
+		: WeaponData->ThirdPersonMontages;
+
+	if (const FMontageData* Data = Montages.Find(WeaponType))
+	{
+		switch (Slot)
+		{
+		case ECombatMontageSlot::Equip: return Data->EquipMontage;
+		case ECombatMontageSlot::Reload: return Data->ReloadMontage;
+		case ECombatMontageSlot::Fire: return Data->FireMontage;
+		default: return nullptr;
+		}
+	}
+	return nullptr;
+}
+
+UAnimMontage* UCombatComponent::GetWeaponMontage(const FGameplayTag& WeaponType, ECombatMontageSlot Slot) const
+{
+	if (!IsValid(WeaponData)) return nullptr;
+
+	if (const FMontageData* Data = WeaponData->WeaponMontages.Find(WeaponType))
+	{
+		switch (Slot)
+		{
+		case ECombatMontageSlot::Equip: return Data->EquipMontage;
+		case ECombatMontageSlot::Reload: return Data->ReloadMontage;
+		case ECombatMontageSlot::Fire: return Data->FireMontage;
+		default: return nullptr;
+		}
+	}
+	return nullptr;
 }
 
 void UCombatComponent::Server_ReloadWeapon_Implementation()
@@ -328,7 +376,7 @@ void UCombatComponent::Server_ReloadWeapon_Implementation()
 	Multicast_ReloadWeapon(CurrentWeapon->GetAmmo(), CurrentReserveAmmo);
 }
 
-void UCombatComponent::Multicast_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
+void UCombatComponent::Multicast_ReloadWeapon_Implementation(int32 NewWeaponAmmo, int32 NewCarriedAmmo)
 {
 	Local_ReloadWeapon();
 }
