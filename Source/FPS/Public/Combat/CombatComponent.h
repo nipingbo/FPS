@@ -51,12 +51,11 @@ public:
 	void Initiate_Aim_Released();
 	
 	void Notify_CycleWeapon();
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Weapon")
-	TObjectPtr<UWeaponData> WeaponData;
+	void Notify_ReloadWeapon();
 	
 	void Equip(AWeapon* Weapon);
 	
+	/* Equip Weapon */
 	void EquipWeapon(AWeapon* Weapon);
 	UFUNCTION(Server, Reliable)
 	void Server_EquipWeapon(AWeapon* Weapon);
@@ -67,6 +66,9 @@ public:
 	void DestroyInventory();
 	
 	void InitializeWeaponWidgets() const;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Weapon")
+	TObjectPtr<UWeaponData> WeaponData;
 	
 	UPROPERTY(BlueprintAssignable)
 	FReticleChanged OnReticleChanged;
@@ -154,7 +156,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_ReloadWeapon();
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
+	void Multicast_ReloadWeapon();
+	UFUNCTION(Client, Reliable)
+	void Client_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
 
 	/* 蒙太奇播放辅助 */
 	bool PlayMontageOnMesh(const USkeletalMeshComponent* Mesh, UAnimMontage* Montage) const;

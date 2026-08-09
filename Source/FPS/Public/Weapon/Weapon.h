@@ -74,6 +74,7 @@ public:
 	
 	int32 GetMagCapacity() const { return MagCapacity; }
 	int32 GetAmmo() const { return Ammo; };
+	void SetAmmo(const int32 NewAmmo) { Ammo = NewAmmo; };
 	int32 GetStartingCarriedAmmo() const { return StartingCarriedAmmo; };
 	
 	EWeaponStatus WeaponStatus;
