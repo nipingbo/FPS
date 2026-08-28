@@ -181,7 +181,7 @@ void UCombatComponent::Server_FireWeapon_Implementation()
 		return;
 	}
 	LastFireTime = Now;
-
+	
 	// Listen Server 上的本地玩家（Host）已在 Local_Fire 里预测扣弹，跳过避免双重扣弹。
 	// 其他情况（Dedicated Server、Listen Server 上的远程客户端）均需在此执行权威扣弹。
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
@@ -195,6 +195,12 @@ void UCombatComponent::Server_FireWeapon_Implementation()
 	FHitResult Hit;
 	CurrentWeapon->WeaponTrace(Hit, CurrentWeapon->TraceLength);
 	Multicast_FireWeapon(Hit);
+	
+	// 播放被击中Montage
+	if (IsValid(Hit.GetActor()) && Hit.GetActor()->Implements<UPlayerInterface>())
+	{
+		IPlayerInterface::Execute_DoDamage(Hit.GetActor(), 0.f, GetOwner());
+	}
 }
 
 void UCombatComponent::Client_FireRejected_Implementation(int32 AuthAmmo)
@@ -544,7 +550,18 @@ void UCombatComponent::SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon)
 	if (!IsValid(OwningPawn)) return;
 	if (OwningPawn->HasAuthority() && IsValid(CurrentWeapon))
 	{
-		CurrentReserveAmmo = ReserveAmmo.FindChecked(CurrentWeapon->WeaponType);
+		// 装备的武器类型可能没在 ReserveAmmo 中（如扩展/拾取武器），FindChecked 会崩溃，改用 Find 兜底
+		if (const int32* FoundReserve = ReserveAmmo.Find(CurrentWeapon->WeaponType))
+		{
+			CurrentReserveAmmo = *FoundReserve;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("SetCurrentWeapon: no reserve ammo mapped for weapon type %s — defaulting to 0"),
+				*CurrentWeapon->WeaponType.ToString());
+			CurrentReserveAmmo = 0;
+		}
 	}
 	
 	CurrentWeapon->AttachToOwningPawn(OwningPawn);

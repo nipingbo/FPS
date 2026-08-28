@@ -4,6 +4,7 @@
 #include "Character/ShooterCharacter.h"
 
 #include "EnhancedInputComponent.h"
+#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/CombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -116,7 +117,15 @@ void AShooterCharacter::OnRep_PlayerState()
 FName AShooterCharacter::GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponType) const
 {
 	checkf(Combat->WeaponData, TEXT("No Weapon Data Asset - Please fill out BP_ShooterCharacter"));
-	return Combat->WeaponData->GripPoints.FindChecked(WeaponType);
+	// 武器类型未在 GripPoints 配置时 FindChecked 会崩溃，改用 Find 返回默认 socket
+	if (const FName* Found = Combat->WeaponData->GripPoints.Find(WeaponType))
+	{
+		return *Found;
+	}
+	UE_LOG(LogTemp, Warning,
+		TEXT("GetWeaponAttachPoint: no grip point configured for weapon type %s — falling back to default socket"),
+		*WeaponType.ToString());
+	return NAME_None;
 }
 
 USkeletalMeshComponent* AShooterCharacter::GetMesh1P_Implementation() const
@@ -167,6 +176,29 @@ void AShooterCharacter::AddAmmo_Implementation(const FGameplayTag& WeaponType, i
 	if (HasAuthority() && IsValid(Combat))
 	{
 		Combat->AddAmmo(WeaponType, AmmoAmount);
+	}
+}
+
+bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator)
+{
+	// HitReacts 未配置时 Num()-1 为 -1，RandRange(0,-1) 会触发 check 崩溃，先空数组守护
+	if (HitReacts.Num() == 0) return false;
+	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() - 1);
+	Multicast_HitReact(MontageSelection);
+	return false;
+}
+
+void AShooterCharacter::Multicast_HitReact_Implementation(int32 MontageIndex)
+{
+	if (GetNetMode() != NM_DedicatedServer && !IsLocallyControlled())
+	{
+		if (HitReacts.IsValidIndex(MontageIndex))
+		{
+			if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); IsValid(AnimInstance))
+			{
+				AnimInstance->Montage_Play(HitReacts[MontageIndex]);
+			}
+		}
 	}
 }
 

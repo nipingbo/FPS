@@ -37,6 +37,7 @@ public:
 	virtual void Notify_CycleWeapon_Implementation() override;
 	virtual void Notify_ReloadWeapon_Implementation() override;
 	virtual void AddAmmo_Implementation(const FGameplayTag& WeaponType, int32 AmmoAmount) override;
+	virtual bool DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator) override;
 	/* End Of PlayerInterface*/
 
 	virtual void BeginPlay() override;
@@ -56,9 +57,15 @@ public:
 	
 	bool HasWeaponFirstReplicated() const { return bWeaponFirstReplicated; }
 	
+	UPROPERTY(EditDefaultsOnly, Category="FPS|HitReact")
+	TArray<TObjectPtr<UAnimMontage>> HitReacts;
+	
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAim(bool bIsAiming);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_HitReact(int32 MontageIndex);
 private:
 	
 	void Input_CycleWeapon();
