@@ -8,6 +8,7 @@
 #include "ShooterTypes/ShooterTypes.h"
 #include "ShooterCharacter.generated.h"
 
+class UHealthComponent;
 class UCombatComponent;
 class UInputAction;
 class UCameraComponent;
@@ -91,6 +92,9 @@ private:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "FPS|TurnInPlace", meta = (AllowPrivateAccess = true))
 	ETurningInPlace TurningStatus;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Health")
+	TObjectPtr<UHealthComponent> Health;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Combat")
 	TObjectPtr<UCombatComponent> Combat;
