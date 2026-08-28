@@ -7,7 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "HealthComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FHealthChanged, UHealthComponent* HealthComponent, float, OldValue, float, NewValue, AActor*, Instigator);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FHealthChanged, UHealthComponent*, HealthComponent, float, OldValue, float, NewValue, AActor*, Instigator);
 
 UENUM(BlueprintType)
 enum class EDeathState : uint8
@@ -57,7 +57,7 @@ protected:
 	void OnRep_DeathState(EDeathState OldDeathState);
 	
 	UFUNCTION()
-	void OnRep_Health(float OldValue)const;
+	void OnRep_Health(float OldValue);
 	
 	UFUNCTION()
 	void OnRep_MaxHealth(float OldValue);

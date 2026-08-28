@@ -55,7 +55,7 @@ void UHealthComponent::OnRep_DeathState(EDeathState OldDeathState)
 {
 }
 
-void UHealthComponent::OnRep_Health(float OldValue) const
+void UHealthComponent::OnRep_Health(float OldValue)
 {
 	//broadcast OnHealthChanged
 	OnHealthChanged.Broadcast(this, OldValue, Health, nullptr);
