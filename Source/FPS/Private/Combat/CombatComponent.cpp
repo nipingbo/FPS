@@ -199,7 +199,7 @@ void UCombatComponent::Server_FireWeapon_Implementation()
 	// 播放被击中Montage
 	if (IsValid(Hit.GetActor()) && Hit.GetActor()->Implements<UPlayerInterface>())
 	{
-		IPlayerInterface::Execute_DoDamage(Hit.GetActor(), 0.f, GetOwner());
+		IPlayerInterface::Execute_DoDamage(Hit.GetActor(), CurrentWeapon->Damage, GetOwner());
 	}
 }
 

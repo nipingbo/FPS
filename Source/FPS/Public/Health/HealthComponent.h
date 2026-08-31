@@ -29,7 +29,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FPS|Health")
 	static UHealthComponent* FindHealthComponent(const AActor* Actor) { return IsValid(Actor) ? Actor->FindComponentByClass<UHealthComponent>() : nullptr; }
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	float GetHealthNormalized() const;
 	
 	//return ture if lethal
@@ -39,10 +39,10 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_DeathState)
 	EDeathState DeathState;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_Health)
+	UPROPERTY(ReplicatedUsing = OnRep_Health, EditDefaultsOnly, Category = "FPS|Health")
 	float Health;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_MaxHealth)
+	UPROPERTY(ReplicatedUsing = OnRep_MaxHealth, EditDefaultsOnly, Category = "FPS|Health")
 	float MaxHealth;
 	
 	UPROPERTY(BlueprintAssignable)

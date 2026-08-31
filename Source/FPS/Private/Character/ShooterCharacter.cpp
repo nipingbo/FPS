@@ -187,6 +187,9 @@ bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* Dama
 {
 	// HitReacts 未配置时 Num()-1 为 -1，RandRange(0,-1) 会触发 check 崩溃，先空数组守护
 	if (HitReacts.Num() == 0) return false;
+	if (!IsValid(Health)) return false;
+	
+	Health->ChangeHealthByAmount(-DamageAmount, DamageInstigator);
 	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() - 1);
 	Multicast_HitReact(MontageSelection);
 	return false;
