@@ -11,6 +11,7 @@
 AShooterPlayerController::AShooterPlayerController()
 {
 	bReplicates = true;
+	bPawnAlive = true;
 }
 
 void AShooterPlayerController::BeginPlay()
@@ -40,6 +41,7 @@ void AShooterPlayerController::Input_Crouch()
 {
 	ACharacter* Character = GetCharacter();
 	if (!IsValid(Character)) return;
+	if (!bPawnAlive) return;
 
 	if (Character->bIsCrouched)
 		Character->UnCrouch();
@@ -51,7 +53,8 @@ void AShooterPlayerController::Input_Jump()
 {
 	ACharacter* Character = GetCharacter();
 	if (!IsValid(Character)) return;
-
+	if (!bPawnAlive) return;
+	
 	if (Character->bIsCrouched)
 		Character->UnCrouch();
 	else
@@ -60,6 +63,7 @@ void AShooterPlayerController::Input_Jump()
 
 void AShooterPlayerController::Input_Move(const FInputActionValue& InputActionValue)
 {
+	if (!bPawnAlive) return;
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
@@ -76,6 +80,7 @@ void AShooterPlayerController::Input_Move(const FInputActionValue& InputActionVa
 
 void AShooterPlayerController::Input_Look(const FInputActionValue& InputActionValue)
 {
+	if (!bPawnAlive) return;
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
 	AddYawInput(InputAxisVector.X);
 	AddPitchInput(InputAxisVector.Y);
