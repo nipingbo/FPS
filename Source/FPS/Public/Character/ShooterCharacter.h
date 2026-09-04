@@ -107,7 +107,7 @@ private:
 	TObjectPtr<UCombatComponent> Combat;
 	
 	// 1st person view (arms)
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Mesh")
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
 	UPROPERTY(VisibleAnywhere)
