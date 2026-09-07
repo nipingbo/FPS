@@ -73,7 +73,9 @@ protected:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void DeathEffects();
-	
+
+	FTimerHandle DeathTimer;
+	void DeathTimerFinished();
 private:
 	
 	void Input_CycleWeapon();
@@ -118,7 +120,10 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming", meta = (AllowPrivateAccess = true))
 	float DefaultFieldOfView;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Respawn", meta = (AllowPrivateAccess = true))
+	float RespawnTime;
+
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> CycleWeaponAction;
 	
