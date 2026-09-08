@@ -1,5 +1,4 @@
-// Raymond Learn UE Project
-
+/* Raymond Learn UE Project */
 
 #include "Health/HealthComponent.h"
 #include "Net/UnrealNetwork.h"
