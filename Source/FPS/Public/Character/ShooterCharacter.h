@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Elimination/EliminationComponent.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
 #include "ShooterTypes/ShooterTypes.h"
@@ -14,6 +15,8 @@ class UInputAction;
 class UCameraComponent;
 class USpringArmComponent;
 class AWeapon;
+class UEliminationComponent;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWeaponFirstReplicated, AWeapon*, Weapon);
 
 UCLASS()
@@ -107,9 +110,11 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Combat")
 	TObjectPtr<UCombatComponent> Combat;
-	
-	// 1st person view (arms)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Mesh")
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Elimination")
+	TObjectPtr<UEliminationComponent> Elimination;
+
+	// 1st person view (arms)UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Mesh")
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
 	UPROPERTY(VisibleAnywhere)
