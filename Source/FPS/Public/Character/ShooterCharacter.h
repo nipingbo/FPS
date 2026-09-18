@@ -114,7 +114,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Elimination")
 	TObjectPtr<UEliminationComponent> Elimination;
 
-	// 1st person view (arms)UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Mesh")
+	// 1st person view (arms)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"), Category = "FPS|Mesh")
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
 	UPROPERTY(VisibleAnywhere)
