@@ -212,7 +212,11 @@ bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* Dama
 	if (HitReacts.Num() == 0) return false;
 	if (!IsValid(Health)) return false;
 	
-	Health->ChangeHealthByAmount(-DamageAmount, DamageInstigator);
+	if (Health->ChangeHealthByAmount(-DamageAmount, DamageInstigator))
+	{
+		return true; //return true if lethal
+	}
+	// 播放被击中时的Montage
 	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() - 1);
 	Multicast_HitReact(MontageSelection);
 	return false;

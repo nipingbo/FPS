@@ -181,7 +181,7 @@ void UCombatComponent::Server_FireWeapon_Implementation()
 		return;
 	}
 	LastFireTime = Now;
-	
+
 	// Listen Server 上的本地玩家（Host）已在 Local_Fire 里预测扣弹，跳过避免双重扣弹。
 	// 其他情况（Dedicated Server、Listen Server 上的远程客户端）均需在此执行权威扣弹。
 	if (GetNetMode() != NM_ListenServer || !Cast<APawn>(GetOwner())->IsLocallyControlled())
@@ -196,11 +196,16 @@ void UCombatComponent::Server_FireWeapon_Implementation()
 	CurrentWeapon->WeaponTrace(Hit, CurrentWeapon->TraceLength);
 	Multicast_FireWeapon(Hit);
 	
+	const bool bHit = IsValid(Hit.GetActor()) && Hit.GetActor()->Implements<UPlayerInterface>();
+	const bool bHeadShot = Hit.BoneName == "head";
+	bool bLethal = false;
+
 	// 播放被击中Montage
-	if (IsValid(Hit.GetActor()) && Hit.GetActor()->Implements<UPlayerInterface>())
+	if (bHit)
 	{
-		IPlayerInterface::Execute_DoDamage(Hit.GetActor(), CurrentWeapon->Damage, GetOwner());
+		bLethal = IPlayerInterface::Execute_DoDamage(Hit.GetActor(), CurrentWeapon->Damage, GetOwner());
 	}
+	OnRoundReported.Broadcast(GetOwner(), Hit.GetActor(), bHit, bHeadShot, bLethal);
 }
 
 void UCombatComponent::Client_FireRejected_Implementation(int32 AuthAmmo)
