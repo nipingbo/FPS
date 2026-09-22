@@ -43,7 +43,19 @@ void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* Att
 	
 void UEliminationComponent::ProcessElimination(bool bHit, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
 {
+	AttackerPS->AddScoredElim();
+	VictimPS->AddDefeat();
 
+	// process head shot
+	// process sequential eliminations
+	// process streaks
+	// handle first blood
+	// update leader status
+
+	// if (has special elim types)
+		// tell the client which special elims we got
+	// else
+		// tell the client we got a regular elim
 }
 
 AShooterPlayerState* UEliminationComponent::GetPlayerStateFromActor(AActor* Actor)
