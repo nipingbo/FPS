@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Misc/EnumClassFlags.h"
 #include "ShooterTypes.generated.h"
 
 UENUM(BlueprintType)

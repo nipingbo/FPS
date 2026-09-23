@@ -7,6 +7,7 @@
 #include "EliminationComponent.generated.h"
 
 class AShooterPlayerState;
+enum class ESpecialElimType : uint16;
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class FPS_API UEliminationComponent : public UActorComponent
 {
@@ -23,5 +24,5 @@ private:
 	AShooterPlayerState* GetPlayerStateFromActor(AActor* Actor);
 	void ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPS);
 	void ProcessElimination(bool bHit, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
-
+	void ProcessHeadShot(bool bHit, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS);
 };

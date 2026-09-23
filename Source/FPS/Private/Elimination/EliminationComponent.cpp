@@ -3,6 +3,7 @@
 #include "Elimination/EliminationComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Player/ShooterPlayerState.h"
+#include "ShooterTypes/ShooterTypes.h"
 
 // Sets default values for this component's properties
 UEliminationComponent::UEliminationComponent()
@@ -40,13 +41,25 @@ void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* Att
 		AttackerPS->AddMiss();
 	}
 }
+
+void UEliminationComponent::ProcessHeadShot(bool bHit, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS)
+{
+	if (bHit)
+	{
+		OutElimType |= ESpecialElimType::Headshot;
+		AttackerPS->AddHeadShotElim();
+	}
+}
 	
 void UEliminationComponent::ProcessElimination(bool bHit, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
 {
 	AttackerPS->AddScoredElim();
 	VictimPS->AddDefeat();
 
+	ESpecialElimType SpecialElimType{};
+
 	// process head shot
+	ProcessHeadShot(bHit, SpecialElimType, AttackerPS);
 	// process sequential eliminations
 	// process streaks
 	// handle first blood
