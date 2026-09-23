@@ -1,6 +1,7 @@
 // Raymond Learn UE Project
 
 #include "Elimination/EliminationComponent.h"
+#include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "Player/ShooterPlayerState.h"
 #include "ShooterTypes/ShooterTypes.h"
@@ -9,7 +10,9 @@
 UEliminationComponent::UEliminationComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-
+	SequentialElimInterval = 10.f;
+	LastElimTime = 0.f;
+	SequentialElims = 0;
 }
 
 void UEliminationComponent::OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadShot, bool bLethal)
@@ -41,17 +44,8 @@ void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* Att
 		AttackerPS->AddMiss();
 	}
 }
-
-void UEliminationComponent::ProcessHeadShot(bool bHit, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS)
-{
-	if (bHit)
-	{
-		OutElimType |= ESpecialElimType::Headshot;
-		AttackerPS->AddHeadShotElim();
-	}
-}
 	
-void UEliminationComponent::ProcessElimination(bool bHit, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
+void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
 {
 	AttackerPS->AddScoredElim();
 	VictimPS->AddDefeat();
@@ -59,8 +53,9 @@ void UEliminationComponent::ProcessElimination(bool bHit, AShooterPlayerState* A
 	ESpecialElimType SpecialElimType{};
 
 	// process head shot
-	ProcessHeadShot(bHit, SpecialElimType, AttackerPS);
+	ProcessHeadShot(bHeadShot, SpecialElimType, AttackerPS);
 	// process sequential eliminations
+	ProcessSequentialEliminations(SpecialElimType, AttackerPS);
 	// process streaks
 	// handle first blood
 	// update leader status
@@ -69,6 +64,34 @@ void UEliminationComponent::ProcessElimination(bool bHit, AShooterPlayerState* A
 		// tell the client which special elims we got
 	// else
 		// tell the client we got a regular elim
+}
+
+void UEliminationComponent::ProcessHeadShot(bool bHeadShot, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS)
+{
+	if (bHeadShot)
+	{
+		OutElimType |= ESpecialElimType::Headshot;
+		AttackerPS->AddHeadShotElim();
+	}
+}
+
+void UEliminationComponent::ProcessSequentialEliminations(ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS)
+{
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastElimTime <= SequentialElimInterval)
+	{
+		++SequentialElims;
+	}
+	else
+	{
+		SequentialElims = 1;
+	}
+	LastElimTime = CurrentTime;
+	if (SequentialElims > 1)
+	{
+		OutElimType |= ESpecialElimType::Sequential;
+		AttackerPS->AddSequentialElim(SequentialElims);
+	}
 }
 
 AShooterPlayerState* UEliminationComponent::GetPlayerStateFromActor(AActor* Actor)
